@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import textwrap
 
 DB_FILE = "saveFile.db"
 
@@ -86,6 +87,45 @@ def write_db(name, defintion, native):
         conn.commit()
 
 
+
+def print_table(cursor):
+
+    ID_W = 5
+    NAME_W = 15
+    DEF_W = 35
+    NATIVE_W = 15
+    TIME_W = 20
+
+    rows = cursor.fetchall()
+
+    headers = [description[0] for description in cursor.description]
+    
+    # --- PRINT THE HEADERS ---
+    print("=" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W))
+    print(f"{'ID':<{ID_W}} | {'NAME':<{NAME_W}} | {'DEFINITION':<{DEF_W}} | {'INSERT DATE':<{TIME_W}} | {'NATIVE WORD':<{NATIVE_W}}")
+
+    # --- PRINT THE CONTENT ---
+    for row in rows:
+        counter = -1
+        definition = str(row[2])
+        # limit the definition size into width of DEF_W
+        def_lines = textwrap.wrap(definition, width=DEF_W)
+
+        print(f"{str(row[0]):<{ID_W}} | ", end="")
+        print(f"{str(row[1]):<{NAME_W}} | ", end="")
+        print(f"{def_lines[0]:<{DEF_W}} | ", end="")
+        print(f"{str(row[4]):<{TIME_W}} | ", end="")
+        print(f"{str(row[3]):<{NATIVE_W}}")
+
+        if len(def_lines) > 1:
+            for extra_line in def_lines[1:]:
+                print(f"{' ':<{ID_W}} | ", end="")
+                print(f"{' ':<{NAME_W}} | ", end="")
+                print(f"{extra_line:<{DEF_W}} | ", end="")
+                print(f"{' ':<{TIME_W}} | ", end="")
+                print(f"{' ':<{NATIVE_W}}")
+        
+
 def show():
     if not DB_FILE:
         print("ERROR::SHOWING: file not exists!")
@@ -102,18 +142,7 @@ def show():
             ON d.id = w.word_id
         """)
 
-        rows = cursor.fetchall()
-        
-        headers = [description[0] for description in cursor.description]
-
-        print("=" * 15 * len(headers))
-        # 3. Print headers and rows using a fixed width (e.g., 15 characters)
-        print(" | ".join(f"{col:<15}" for col in headers))
-        print("-" * 15 * len(headers))
-        for row in rows:
-            print(" | ".join(f"{str(item):<15}" for item in row))
-
-        print("=" * 15 * len(headers))
+        print_table(cursor)
     
     except sqlite3.Error as e:
         print(f"ERROR::SHOW: {e}")
@@ -125,6 +154,32 @@ def show():
     # if yes then we will increase the Frequency for the word by 1
     # Also 
 
+def check_word(name):
+    if not DB_FILE:
+        print("ERROR::CHECKING: file not exists!")
+        return
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+    try:
+        cursor.execute(""" 
+        SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
+            FROM definition AS d
+            INNER JOIN words as w 
+            ON d.id = w.word_id
+            WHERE w.name = (?)
+        """,(name,))
+
+        print_table(cursor)
+
+
+    except sqlite3.Error as e:
+        print(f"ERROR::CHECKING: {e}")
+
+    finally:
+        conn.commit()
+
 if __name__ == "__main__":
     init_db()
     user_input = ""
@@ -133,7 +188,8 @@ if __name__ == "__main__":
 =====================
 1- insert word
 2- show
-3- stop
+3- check word
+4- stop
 =====================
 :""")    
 
@@ -148,7 +204,8 @@ if __name__ == "__main__":
             show()
 
         elif user_input == '3':
-            break
+            user_input = input("Enter the name:")
+            check_word(user_input)
 
-        else:
+        elif user_input == '4':
             break
