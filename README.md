@@ -20,8 +20,9 @@
 ## الفكرة الحالية للبرنامج
 
 اول ماتشغل السكربت راح يسألك
-1. هل تبي تضيف كلمة؟
-2. هل تبي تشوف الكلمات المضافة؟
+1. تبي تضيف كلمة؟
+2. تبي تشوف الكلمات المضافة؟
+3. تبي تبحث عن كلمة معينة يطلع لك جميع نتايجها؟ 
 
 ### قسم اضافة الكلمة
 
@@ -43,7 +44,7 @@ CREATE TABLE IF NOT EXISTS dictionary (
 ```
 
 وعند الdfinition الاعمدة بتكون  
-id, defi, native_word, inser_date, word_id
+id, defi, native_word, insert_date, word_id
 
 ```sqlite
 CREATE TABLE IF NOT EXISTS definition (
@@ -55,3 +56,12 @@ CREATE TABLE IF NOT EXISTS definition (
                 FOREIGN KEY (word_id) REFERENCES dictionary(id)
             );
 ```
+
+### قسم عرض النتيجة 
+
+راح يعرض لك الاعمدة هذي من اليسار لليمين:
+ID    | NAME            | DEFINITION                          | INSERT DATE          | NATIVE WORD 
+
+طبعا خليت السكربت يكون مهتم جدا بالمساحات بحيث يكون الشكل واضح ومريح للعين
+
+و حاليا الصفوف تمشي بترتيب ال ID لكن مستقبل راح اخلي المستخدم هو اللي يقرر يمشي على ايش
