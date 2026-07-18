@@ -139,7 +139,7 @@ def show():
             SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
             FROM definition AS d
             INNER JOIN words as w 
-            ON d.id = w.word_id
+            ON d.word_id = w.word_id
         """)
 
         print_table(cursor)
@@ -167,7 +167,7 @@ def check_word(name):
         SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
             FROM definition AS d
             INNER JOIN words as w 
-            ON d.id = w.word_id
+            ON d.word_id = w.word_id
             WHERE w.name = (?)
         """,(name,))
 
