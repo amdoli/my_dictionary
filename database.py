@@ -6,7 +6,9 @@ DB_FILE = "saveFile.db"
 
 def get_connection():
     """ Create and return a database connection. """
-    return sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute("PRAGMA foreign_keys = ON;")
+    return conn
 
 def init_db():
     """ Initialise the table and ensures if exists """
@@ -14,79 +16,63 @@ def init_db():
     with get_connection() as conn:
         cursor = conn.cursor()
 
-    try:
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS words (
-                word_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL,
-                insert_date DATE DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS words (
+                    word_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    insert_date DATE DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
 
-        cursor.execute(""" 
-            CREATE TABLE IF NOT EXISTS definition (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                defi TEXT NOT NULL,
-                native_word TEXT,
-                insert_date DATE DEFAULT CURRENT_TIMESTAMP,
-                word_id INTEGER,
-                FOREIGN KEY (word_id) REFERENCES dictionary(id)
-            )
-        """)
+            cursor.execute(""" 
+                CREATE TABLE IF NOT EXISTS definition (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    defi TEXT NOT NULL,
+                    native_word TEXT,
+                    insert_date DATE DEFAULT CURRENT_TIMESTAMP,
+                    word_id INTEGER,
+                    FOREIGN KEY (word_id) 
+                    REFERENCES words(word_id) ON DELETE CASCADE
+                )
+            """)
 
-    except sqlite3.Error as e:
-        print(f"ERROR::INIT: {e}")
+            if not isFIleExists:
+                print("## Database initialized successfully! ##\n")
 
-    finally:
-        conn.commit()
-        if not isFIleExists:
-            print("## Database initialized successfully! ##\n")
+        except sqlite3.Error as e:
+            print(f"ERROR::INIT: {e}")
 
 def write_db(name, defintion, native):
     """ Insert Data """
         
-    if not DB_FILE:
+    if not os.path.exists(DB_FILE):
         print("ERROR::WRITING: file not exists!")
         return
 
     with get_connection() as conn:
         cursor = conn.cursor()
     
-    try:
-        # First, check if the word already exists
-        while(True):
-            cursor.execute(""" 
-                SELECT * FROM words
-                WHERE name = ?
-            """, (name,))
-        
+        try:
+            # First, check if the word already exists
+            cursor.execute("SELECT word_id FROM words WHERE name = ?", (name,))
             row = cursor.fetchone()
 
             if row:
-                #
                 wordID = row[0]
-                print(wordID)
-                break
-
+            # If not then insert a new word ang grub the ID
             else:
-                cursor.execute(""" 
-                    INSERT INTO words (name)
-                    VALUES (?)
-                """,(name, ))
+                cursor.execute("INSERT INTO words (name) VALUES (?)",(name,))
+                wordID = cursor.lastrowid
+            # Finally, Insert in definition
+            cursor.execute(""" 
+                INSERT INTO definition (defi, native_word, word_id)
+                VALUES (?, ?, ?)
+            """,(defintion, native, wordID))
 
-        cursor.execute(""" 
-            INSERT INTO definition (defi, native_word, word_id)
-            VALUES (?, ?, ?)
-        """,(defintion, native, wordID))
-
-        
-    except sqlite3.Error as e:
-        print(f"ERROR::WRITING: {e}")
-
-    finally: 
-        conn.commit()
-
-
+            
+        except sqlite3.Error as e:
+            print(f"ERROR::WRITING: {e}")
 
 def print_table(cursor):
 
@@ -98,10 +84,14 @@ def print_table(cursor):
 
     rows = cursor.fetchall()
 
+    if not rows:
+        print("\nNo words found in the database yet!")
+        return
+
     headers = [description[0] for description in cursor.description]
     
     # --- PRINT THE HEADERS ---
-    print("=" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W))
+    print("=" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W + 12))
     print(f"{'ID':<{ID_W}} | {'NAME':<{NAME_W}} | {'DEFINITION':<{DEF_W}} | {'INSERT DATE':<{TIME_W}} | {'NATIVE WORD':<{NATIVE_W}}")
 
     # --- PRINT THE CONTENT ---
@@ -124,61 +114,54 @@ def print_table(cursor):
                 print(f"{extra_line:<{DEF_W}} | ", end="")
                 print(f"{' ':<{TIME_W}} | ", end="")
                 print(f"{' ':<{NATIVE_W}}")
+    
+    print("-" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W + 12))
         
 
 def show():
-    if not DB_FILE:
+    if not os.path.exists(DB_FILE):
         print("ERROR::SHOWING: file not exists!")
         return
 
     with get_connection() as conn:
         cursor = conn.cursor()
     
-    try:
-        cursor.execute(""" 
-            SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
-            FROM definition AS d
-            INNER JOIN words as w 
-            ON d.word_id = w.word_id
-        """)
+        try:
+            cursor.execute(""" 
+                SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
+                FROM definition AS d
+                INNER JOIN words as w 
+                ON d.word_id = w.word_id
+            """)
 
-        print_table(cursor)
-    
-    except sqlite3.Error as e:
-        print(f"ERROR::SHOW: {e}")
-
-    finally:
-        conn.commit()
-    
-    # We will check first if data already exists
-    # if yes then we will increase the Frequency for the word by 1
-    # Also 
+            print_table(cursor)
+        
+        except sqlite3.Error as e:
+            print(f"ERROR::SHOW: {e}")
 
 def check_word(name):
-    if not DB_FILE:
+    if not os.path.exists(DB_FILE):
         print("ERROR::CHECKING: file not exists!")
         return
 
     with get_connection() as conn:
         cursor = conn.cursor()
 
-    try:
-        cursor.execute(""" 
-        SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
-            FROM definition AS d
-            INNER JOIN words as w 
-            ON d.word_id = w.word_id
-            WHERE w.name = (?)
-        """,(name,))
+        try:
+            cursor.execute(""" 
+            SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
+                FROM definition AS d
+                INNER JOIN words as w 
+                ON d.word_id = w.word_id
+                WHERE w.name = (?)
+            """,(name,))
 
-        print_table(cursor)
+            print_table(cursor)
 
 
-    except sqlite3.Error as e:
-        print(f"ERROR::CHECKING: {e}")
+        except sqlite3.Error as e:
+            print(f"ERROR::CHECKING: {e}")
 
-    finally:
-        conn.commit()
 
 if __name__ == "__main__":
     init_db()
