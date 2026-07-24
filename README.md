@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS dictionary (
             );
 ```
 
-وعند الdfinition الاعمدة بتكون  
+وعند الdefinition الاعمدة بتكون  
 id, defi, native_word, insert_date, word_id
 
 ```sqlite
@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS definition (
 ### قسم عرض النتيجة 
 
 راح يعرض لك الاعمدة هذي من اليسار لليمين: 
+
 ID    | NAME            | DEFINITION                          | INSERT DATE          | NATIVE WORD 
 
 طبعا خليت السكربت يكون مهتم جدا بالمساحات بحيث يكون الشكل واضح ومريح للعين
