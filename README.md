@@ -32,7 +32,7 @@
 * dictionary
 * definition
 
-عند الdictionary راح يكون الاعمدة هم 
+عند words راح تكون الاعمدة هم 
 word_id, name, insert_date
 
 ```sqlite
