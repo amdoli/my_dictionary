@@ -45,11 +45,6 @@ def init_db():
 
 def write_db(name, defintion, native):
     """ Insert Data """
-        
-    if not os.path.exists(DB_FILE):
-        print("ERROR::WRITING: file not exists!")
-        return
-
     with get_connection() as conn:
         cursor = conn.cursor()
     
@@ -75,11 +70,11 @@ def write_db(name, defintion, native):
             print(f"ERROR::WRITING: {e}")
 
 def print_table(cursor):
-
     ID_W = 5
     NAME_W = 15
     DEF_W = 35
     NATIVE_W = 15
+    FREQ_W = 7
     TIME_W = 20
 
     rows = cursor.fetchall()
@@ -88,11 +83,11 @@ def print_table(cursor):
         print("\nNo words found in the database yet!")
         return
 
-    headers = [description[0] for description in cursor.description]
+    #headers = [description[0] for description in cursor.description]
     
     # --- PRINT THE HEADERS ---
     print("=" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W + 12))
-    print(f"{'ID':<{ID_W}} | {'NAME':<{NAME_W}} | {'DEFINITION':<{DEF_W}} | {'INSERT DATE':<{TIME_W}} | {'NATIVE WORD':<{NATIVE_W}}")
+    print(f"{'ID':<{ID_W}} | {'NAME':<{NAME_W}} | {'DEFINITION':<{DEF_W}} | {'FREQ':<{FREQ_W}} | {'INSERT DATE':<{TIME_W}} | {'NATIVE WORD':<{NATIVE_W}}")
 
     # --- PRINT THE CONTENT ---
     for row in rows:
@@ -104,7 +99,8 @@ def print_table(cursor):
         print(f"{str(row[0]):<{ID_W}} | ", end="")
         print(f"{str(row[1]):<{NAME_W}} | ", end="")
         print(f"{def_lines[0]:<{DEF_W}} | ", end="")
-        print(f"{str(row[4]):<{TIME_W}} | ", end="")
+        print(f"{str(row[4]):<{FREQ_W}} | ",  end="")
+        print(f"{str(row[5]):<{TIME_W}} | ", end="")
         print(f"{str(row[3]):<{NATIVE_W}}")
 
         if len(def_lines) > 1:
@@ -112,6 +108,7 @@ def print_table(cursor):
                 print(f"{' ':<{ID_W}} | ", end="")
                 print(f"{' ':<{NAME_W}} | ", end="")
                 print(f"{extra_line:<{DEF_W}} | ", end="")
+                print(f"{' ':<{FREQ_W}} | ", end="")
                 print(f"{' ':<{TIME_W}} | ", end="")
                 print(f"{' ':<{NATIVE_W}}")
     
@@ -119,19 +116,21 @@ def print_table(cursor):
         
 
 def show():
-    if not os.path.exists(DB_FILE):
-        print("ERROR::SHOWING: file not exists!")
-        return
-
+    """ Show all rows """
     with get_connection() as conn:
         cursor = conn.cursor()
     
         try:
             cursor.execute(""" 
-                SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
+                SELECT 
+                    d.id, 
+                    w.name, 
+                    d.defi, 
+                    d.native_word,
+                    COUNT(w.word_id) OVER(PARTITION BY w.word_id) AS total_definition, 
+                    d.insert_date
                 FROM definition AS d
-                INNER JOIN words as w 
-                ON d.word_id = w.word_id
+                INNER JOIN words AS w ON d.word_id = w.word_id
             """)
 
             print_table(cursor)
@@ -140,20 +139,21 @@ def show():
             print(f"ERROR::SHOW: {e}")
 
 def check_word(name):
-    if not os.path.exists(DB_FILE):
-        print("ERROR::CHECKING: file not exists!")
-        return
-
     with get_connection() as conn:
         cursor = conn.cursor()
 
         try:
             cursor.execute(""" 
-            SELECT d.id, w.name, d.defi, d.native_word, d.insert_date
-                FROM definition AS d
-                INNER JOIN words as w 
-                ON d.word_id = w.word_id
-                WHERE w.name = (?)
+            SELECT 
+                d.id, 
+                w.name, 
+                d.defi, 
+                d.native_word,
+                COUNT(w.word_id) OVER(PARTITION BY w.word_id) AS total_definition, 
+                d.insert_date
+            FROM definition AS d
+            INNER JOIN words as w ON d.word_id = w.word_id
+            WHERE w.name = (?)
             """,(name,))
 
             print_table(cursor)
