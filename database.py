@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import textwrap
+from menu_config import *
 
 DB_FILE = "saveFile.db"
 
@@ -163,10 +164,13 @@ def check_word(name):
             print(f"ERROR::CHECKING: {e}")
 
 
+app_should_close = False
+
 if __name__ == "__main__":
     init_db()
     user_input = ""
-    while True:
+    print("\033[2J\033[H", end="")
+    while not app_should_close:
         user_input = input(""" 
 =====================
 1- insert word
@@ -175,20 +179,25 @@ if __name__ == "__main__":
 4- stop
 =====================
 :""")    
-
-        if user_input == '1':
+        print("\033[2J\033[H", end="")
+        if user_input.lower() in OPTION_ONE:
             word = input("enter name: ")
             definition = input("enter definition: ")
             native_word = input("enter the native word: ")
 
             write_db(word, definition, native_word)
         
-        elif user_input == '2':
+        elif user_input.lower() in OPTION_TWO:
             show()
 
-        elif user_input == '3':
+        elif user_input.lower() in OPTION_THREE:
             user_input = input("Enter the name:")
             check_word(user_input)
 
-        elif user_input == '4':
-            break
+        elif user_input.lower() in OPTION_FOUR:
+            app_should_close = True
+
+        else:
+            print(f"\nUnidentified answer. Please try again.\n")
+
+        
