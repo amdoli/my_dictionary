@@ -29,14 +29,14 @@
 لم تختار خيار اضافة الكلمة راح يسالك البرنامج عن الكلمة والشرح لها ومعناها بلغتك الام.
 
 بالنسبة للتيبل راح يسوي جدولين الا وهو 
-* dictionary
+* words
 * definition
 
 عند words راح تكون الاعمدة هم 
 word_id, name, insert_date
 
 ```sqlite
-CREATE TABLE IF NOT EXISTS dictionary (
+CREATE TABLE IF NOT EXISTS words (
                 word_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
                 insert_date DATE DEFAULT CURRENT_TIMESTAMP
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS definition (
                 native_word TEXT,
                 insert_date DATE DEFAULT CURRENT_TIMESTAMP,
                 word_id INTEGER,
-                FOREIGN KEY (word_id) REFERENCES dictionary(id)
+                FOREIGN KEY (word_id) REFERENCES words(id)
             );
 ```
 
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS definition (
 
 راح يعرض لك الاعمدة هذي من اليسار لليمين: 
 
-ID    | NAME            | DEFINITION                          | INSERT DATE          | NATIVE WORD 
+ID    | NAME            | DEFINITION                          | FREQ    | INSERT DATE          | NATIVE WORD 
 
 طبعا خليت السكربت يكون مهتم جدا بالمساحات بحيث يكون الشكل واضح ومريح للعين
 
