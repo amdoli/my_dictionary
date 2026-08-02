@@ -77,9 +77,7 @@ def main_menu():
             continue
         command = parts[0] # 'show'
         flag = parts[1] if len(parts) > 1 else None 
-
-        source = flag if flag in SOURCE_FLAGS else "General" # '-s
-
+        
         print("\033[2J\033[H", end="")
 
         # /-- INSERT --/
@@ -89,20 +87,21 @@ def main_menu():
             definition = input("enter definition: ")
             native_word = input("enter the native word: ")
 
-            if check_flag(command.lower(), WRITE_OPTIONS, flag):             
+            check_flag(command.lower(), WRITE_OPTIONS, flag)             
 
-                # we will process every flag if enabled
-                if source:
-                    source = input("Enter from where you got this word")
+            # we will process every flag if enabled
+            source = identify_flag(flag)
+            if source:
+                source = input("Enter from where you got this word: ")
                                 
             write_db(word, definition, native_word, source)
 
         # /-- SHOW --/
         elif command.lower() in SHOW_NAME:
 
-            check_flag(command.lower(), SHOW_OPTIONS, source)
+            check_flag(command.lower(), SHOW_OPTIONS, flag)
                     
-            cursor, flags = show(source) # TEMPORARLY need to change its 
+            cursor, flags = show(flag) # TEMPORARLY need to change its 
             print_table(cursor, flags.isSource)
 
         # /-- CHECK --/

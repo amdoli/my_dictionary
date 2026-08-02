@@ -46,10 +46,12 @@ def init_db():
         except sqlite3.Error as e:
             print(f"ERROR::INIT: {e}")
 
-def write_db(name, defintion, native, source = "General"):
+def write_db(name, defintion, native, source = None):
     """ Insert Data """
     with get_connection() as conn:
         cursor = conn.cursor()
+        if not source:
+            source = "General"
     
         try:
             # First, check if the word already exists
