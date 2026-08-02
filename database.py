@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from menu_config import *
+from flags import identify_flag
 
 
 DB_FILE = "saveFile.db"
@@ -45,7 +46,7 @@ def init_db():
         except sqlite3.Error as e:
             print(f"ERROR::INIT: {e}")
 
-def write_db(name, defintion, native, source = None):
+def write_db(name, defintion, native, source = "General"):
     """ Insert Data """
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -57,16 +58,17 @@ def write_db(name, defintion, native, source = None):
 
             if row:
                 wordID = row[0]
+
             # If not then insert a new word ang grub the ID
             else:
                 cursor.execute("INSERT INTO words (name) VALUES (?)",(name,))
                 wordID = cursor.lastrowid
+
             # Finally, Insert in definition
             cursor.execute(""" 
                 INSERT INTO definition (defi, native_word, word_id, source)
                 VALUES (?, ?, ?, ?)
             """,(defintion, native, wordID, source))
-
             
         except sqlite3.Error as e:
             print(f"ERROR::WRITING: {e}")        
@@ -77,40 +79,33 @@ def show(flag = None):
         cursor = conn.cursor()
     
         try:
-            # check if flag is equal one of src option list
-            isSource = True if flag in SOURCE_FLAGS else False
+            flag = identify_flag(flag)
+            
+            # check for any flag is on
+            from types import SimpleNamespace
+            flags = SimpleNamespace()
 
-            if isSource:
-                cursor.execute(""" 
-                    SELECT 
-                        d.id, 
-                        w.name, 
-                        d.defi, 
-                        d.native_word,
-                        COUNT(w.word_id) OVER(PARTITION BY w.word_id) AS total_definition, 
-                        d.insert_date,
-                        d.source
-                    FROM definition AS d
-                    INNER JOIN words AS w ON d.word_id = w.word_id
-                """)
+            flags.isSource = True if flag in SOURCE_FLAGS else False
+            flags.isHelp = True if flag in HELP_FLAGS else False
 
-            else:
-                cursor.execute(""" 
-                    SELECT 
-                        d.id, 
-                        w.name, 
-                        d.defi, 
-                        d.native_word,
-                        COUNT(w.word_id) OVER(PARTITION BY w.word_id) AS total_definition, 
-                        d.insert_date
-                    FROM definition AS d
-                    INNER JOIN words AS w ON d.word_id = w.word_id
-                """)
+
+            cursor.execute(""" 
+                SELECT 
+                    d.id, 
+                    w.name, 
+                    d.defi, 
+                    d.native_word,
+                    COUNT(w.word_id) OVER(PARTITION BY w.word_id) AS total_definition, 
+                    d.insert_date,
+                    d.source
+                FROM definition AS d
+                INNER JOIN words AS w ON d.word_id = w.word_id
+            """)
         
         except sqlite3.Error as e:
             print(f"ERROR::SHOW: {e}")
 
-    return cursor, isSource
+    return cursor, flags
 
 def check_word(name):
     with get_connection() as conn:

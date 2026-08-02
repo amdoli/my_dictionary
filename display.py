@@ -52,6 +52,8 @@ def print_table(cursor, isSource = False):
     print("-" * (ID_W + NAME_W + DEF_W + NATIVE_W + TIME_W + src_w + 12))
 
 
+
+
 def main_menu():
     app_should_close = False
 
@@ -78,9 +80,9 @@ def main_menu():
 
         source = flag if flag in SOURCE_FLAGS else "General" # '-s
 
-
         print("\033[2J\033[H", end="")
 
+        # /-- INSERT --/
         if command.lower() in INSERT_NAME:
 
             word = input("enter name: ")
@@ -100,13 +102,15 @@ def main_menu():
 
             check_flag(command.lower(), SHOW_OPTIONS, source)
                     
-            cursor, isSource = show(source) # TEMPORARLY need to change its 
-            print_table(cursor, isSource)
+            cursor, flags = show(source) # TEMPORARLY need to change its 
+            print_table(cursor, flags.isSource)
 
+        # /-- CHECK --/
         elif command.lower() in CHECK_NAME:
             user_input = input("Enter the name:")
             check_word(user_input)
 
+        # /-- STOP --/
         elif command.lower() in STOP_NAME:
             app_should_close = True
 

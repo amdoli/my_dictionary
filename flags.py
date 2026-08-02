@@ -33,5 +33,6 @@ def check_flag(command, command_options, flag = None):
     return True
 
 def help(command_option = None):
-    pass
+    """ Under Maintaining """
+    print("### IN DEVOLOPMENT ### ")
 
